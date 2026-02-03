@@ -1,10 +1,10 @@
-package com.wms.workforce_equipment_service;
+package com.wms.inventory_management_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class WorkforceEquipmentServiceApplicationTests {
+class InventoryManagementServiceApplicationTests {
 
 	@Test
 	void contextLoads() {
