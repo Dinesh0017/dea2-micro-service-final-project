@@ -1,4 +1,4 @@
-package com.nsbm.picking_packing_service;
+package com.wms.picking_packing_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
