@@ -6,8 +6,15 @@ import com.wms.orderservice.dto.request.UpdateOrderStatusRequest;
 import com.wms.orderservice.dto.response.AvailabilityResponse;
 import com.wms.orderservice.dto.response.OrderResponse;
 import com.wms.orderservice.entity.OrderStatus;
+import com.wms.orderservice.exception.ApiError;
 import com.wms.orderservice.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +37,26 @@ public class OrderController {
     // 1) POST /api/v1/orders — Create order
     // ---------------------------------------------------------------
     @PostMapping
-    @Operation(summary = "Create a new order", description = "Creates an order with items. Status starts as CREATED.")
+    @Operation(
+            summary = "Create a new order",
+            description = """
+                    Creates a new order with one or more items. The order is initialized with status **CREATED**.
+                    
+                    **Business Rules:**
+                    - `customerId` is required and cannot be blank
+                    - At least one item must be provided
+                    - Each item must have a valid `itemId` and `quantity >= 1`
+                    - `partialAllowed` flag determines if partial fulfillment is acceptable during validation
+                    - An order number in format `ORD-YYYY-NNNNNN` is auto-generated
+                    - Total amount is calculated as sum of (quantity × unitPrice) for all items
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Order created successfully",
+                    content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error — missing/invalid fields",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         OrderResponse response = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -40,8 +66,19 @@ public class OrderController {
     // 2) GET /api/v1/orders/{id} — Get order by ID
     // ---------------------------------------------------------------
     @GetMapping("/{id}")
-    @Operation(summary = "Get order by ID")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable UUID id) {
+    @Operation(
+            summary = "Get order by ID",
+            description = "Retrieves a single order by its UUID, including all order items with their requested and approved quantities."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order found",
+                    content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ResponseEntity<OrderResponse> getOrderById(
+            @Parameter(description = "UUID of the order", required = true, example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+            @PathVariable UUID id) {
         OrderResponse response = orderService.getOrderById(id);
         return ResponseEntity.ok(response);
     }
@@ -50,8 +87,21 @@ public class OrderController {
     // 3) GET /api/v1/orders?status=APPROVED — List orders
     // ---------------------------------------------------------------
     @GetMapping
-    @Operation(summary = "List orders", description = "Returns all orders. Optionally filter by status.")
+    @Operation(
+            summary = "List orders",
+            description = """
+                    Returns all orders. Optionally filter by status.
+                    
+                    **Available statuses:** CREATED, VALIDATED, APPROVED, PARTIALLY_APPROVED, REJECTED, CANCELLED, PICKING_REQUESTED, PACKED, DISPATCHED, DELIVERED
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of orders returned",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrderResponse.class))))
+    })
     public ResponseEntity<List<OrderResponse>> getAllOrders(
+            @Parameter(description = "Filter by order status (optional)", example = "CREATED",
+                    schema = @Schema(implementation = OrderStatus.class))
             @RequestParam(required = false) OrderStatus status) {
         List<OrderResponse> responses = orderService.getAllOrders(status);
         return ResponseEntity.ok(responses);
@@ -61,9 +111,34 @@ public class OrderController {
     // 4) POST /api/v1/orders/{id}/validate — Validate order
     // ---------------------------------------------------------------
     @PostMapping("/{id}/validate")
-    @Operation(summary = "Validate order against inventory",
-            description = "Checks availability via Inventory Service. Sets VALIDATED or REJECTED.")
-    public ResponseEntity<AvailabilityResponse> validateOrder(@PathVariable UUID id) {
+    @Operation(
+            summary = "Validate order against inventory",
+            description = """
+                    Checks item availability via the Inventory Service.
+                    
+                    **Outcomes:**
+                    - `canFulfill = true` → Order status set to **VALIDATED**
+                    - `canFulfill = false` and `partialAllowed = false` → Order status set to **REJECTED**
+                    - `canFulfill = false` and `partialAllowed = true` → Order status set to **VALIDATED** (partial fulfillment accepted)
+                    
+                    **Prerequisites:** Order must be in **CREATED** status.
+                    
+                    ⚠️ Requires the Inventory Service to be running.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Validation result returned",
+                    content = @Content(schema = @Schema(implementation = AvailabilityResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Order is not in CREATED status",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "502", description = "Inventory Service unavailable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ResponseEntity<AvailabilityResponse> validateOrder(
+            @Parameter(description = "UUID of the order to validate", required = true)
+            @PathVariable UUID id) {
         AvailabilityResponse response = orderService.validateOrder(id);
         return ResponseEntity.ok(response);
     }
@@ -72,9 +147,36 @@ public class OrderController {
     // 5) POST /api/v1/orders/{id}/approve — Approve order
     // ---------------------------------------------------------------
     @PostMapping("/{id}/approve")
-    @Operation(summary = "Approve order",
-            description = "Approves FULL, PARTIAL, or AUTO. Reserves inventory after approval.")
+    @Operation(
+            summary = "Approve order",
+            description = """
+                    Approves the order with one of three approval types:
+                    
+                    | Type | Description |
+                    |------|------------|
+                    | **FULL** | Approves all items with full requested quantities. Requires sufficient stock. |
+                    | **PARTIAL** | Approves items with manually specified quantities via `approvedItems`. Each `approvedQty` must be ≤ `requestedQty`. |
+                    | **AUTO** | Automatically determines quantities based on inventory availability. Uses `suggestedApprovedItems` from the validation response. |
+                    
+                    **Prerequisites:** Order must be in **VALIDATED** status.
+                    
+                    **Result:** Status becomes **APPROVED** (all items fully approved) or **PARTIALLY_APPROVED** (at least one item has reduced quantity).
+                    
+                    After approval, inventory is reserved via the Inventory Service.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order approved",
+                    content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Business rule violation (e.g., insufficient stock, invalid quantities, wrong status)",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "502", description = "Inventory Service unavailable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
     public ResponseEntity<OrderResponse> approveOrder(
+            @Parameter(description = "UUID of the order to approve", required = true)
             @PathVariable UUID id,
             @Valid @RequestBody ApproveOrderRequest request) {
         OrderResponse response = orderService.approveOrder(id, request);
@@ -85,8 +187,27 @@ public class OrderController {
     // 6) POST /api/v1/orders/{id}/cancel — Cancel order
     // ---------------------------------------------------------------
     @PostMapping("/{id}/cancel")
-    @Operation(summary = "Cancel order", description = "Cancels order if not DISPATCHED or DELIVERED.")
-    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable UUID id) {
+    @Operation(
+            summary = "Cancel order",
+            description = """
+                    Cancels the order if it has not been dispatched or delivered.
+                    
+                    **Not allowed when status is:** DISPATCHED, DELIVERED
+                    
+                    **Result:** Status becomes **CANCELLED**.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order cancelled",
+                    content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Cannot cancel — order already dispatched or delivered",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ResponseEntity<OrderResponse> cancelOrder(
+            @Parameter(description = "UUID of the order to cancel", required = true)
+            @PathVariable UUID id) {
         OrderResponse response = orderService.cancelOrder(id);
         return ResponseEntity.ok(response);
     }
@@ -95,8 +216,32 @@ public class OrderController {
     // 7) PATCH /api/v1/orders/{id}/status — Update status manually
     // ---------------------------------------------------------------
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Update order status", description = "Manual status update with transition validation.")
+    @Operation(
+            summary = "Update order status",
+            description = """
+                    Manual status update with transition validation.
+                    
+                    **Allowed transitions:**
+                    | From | To |
+                    |------|-----|
+                    | APPROVED / PARTIALLY_APPROVED | PICKING_REQUESTED |
+                    | PICKING_REQUESTED | PACKED |
+                    | PACKED | DISPATCHED |
+                    | DISPATCHED | DELIVERED |
+                    
+                    Any invalid transition will be rejected with a **BUSINESS_ERROR**.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Status updated",
+                    content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid status transition",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
     public ResponseEntity<OrderResponse> updateOrderStatus(
+            @Parameter(description = "UUID of the order", required = true)
             @PathVariable UUID id,
             @Valid @RequestBody UpdateOrderStatusRequest request) {
         OrderResponse response = orderService.updateOrderStatus(id, request);
