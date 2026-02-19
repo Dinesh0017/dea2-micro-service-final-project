@@ -8,6 +8,7 @@ import com.wms.inbound_receiving_service.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,7 +17,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InboundServiceImpl implements InboundService {
 
+    private final InboundRepository shipmentRepository; // Added for shipments table
     private final InboundReceiptRepository receiptRepository;
+    private final InboundReceiptItemRepository receiptItemRepository; // Added for dashboard
     private final SupplierRepository supplierRepository;
     private final ProductRepository productRepository;
 
@@ -24,17 +27,19 @@ public class InboundServiceImpl implements InboundService {
     @Transactional
     public InboundResponseDTO receiveShipment(InboundRequestDTO request) {
         Supplier supplier = supplierRepository.findBySupplierName(request.getSupplierName())
-                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with name: " + request.getSupplierName()));
 
         Product product = productRepository.findByProductName(request.getProductName())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with name: " + request.getProductName()));
 
+        // 1. Create the Receipt Header
         InboundReceipt receipt = new InboundReceipt();
         receipt.setSupplier(supplier);
         receipt.setReceiptDate(LocalDate.now());
         receipt.setStatus("RECEIVED");
         receipt.setGrnNumber("GRN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
+        // 2. Create the Receipt Item
         InboundReceiptItem item = new InboundReceiptItem();
         item.setProduct(product);
         item.setQuantityReceived(request.getQuantity());
@@ -45,11 +50,53 @@ public class InboundServiceImpl implements InboundService {
         return mapToResponse(saved);
     }
 
+    // --- Raw Data Methods for Dashboard ---
+
     @Override
     public List<InboundResponseDTO> getAllShipments() {
-        return receiptRepository.findAll().stream()
-                .map(this::mapToResponse)
+        return shipmentRepository.findAll().stream()
+                .map(shipment -> InboundResponseDTO.builder()
+                        .id(shipment.getId())
+                        .supplierName(shipment.getSupplierName())
+                        .productName(shipment.getProductName())
+                        .quantity(shipment.getQuantity())
+                        .status(shipment.getStatus())
+                        .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<InboundReceiptDTO> getAllReceipts() {
+        return receiptRepository.findAllByOrderByReceiptDateDesc().stream()
+                .map(receipt -> InboundReceiptDTO.builder()
+                        .id(receipt.getReceiptId())
+                        .receiptNumber(receipt.getGrnNumber())
+                        .supplierName(receipt.getSupplier().getSupplierName())
+                        .receivedAt(receipt.getReceiptDate().atStartOfDay())
+                        .status(receipt.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<InboundReceiptItemDTO> getAllReceiptItems() {
+        return receiptItemRepository.findAll().stream()
+                .map(item -> InboundReceiptItemDTO.builder()
+                        .id(item.getReceiptItemId())
+                        .receiptId(item.getReceipt().getReceiptId())
+                        .productName(item.getProduct().getProductName())
+                        .quantityReceived(item.getQuantityReceived())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // --- Standard CRUD Methods ---
+
+    @Override
+    public InboundResponseDTO getShipmentById(Long id) {
+        InboundReceipt receipt = receiptRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Receipt not found with ID: " + id));
+        return mapToResponse(receipt);
     }
 
     @Override
@@ -68,13 +115,6 @@ public class InboundServiceImpl implements InboundService {
             throw new ResourceNotFoundException("Receipt not found");
         }
         receiptRepository.deleteById(id);
-    }
-
-    @Override
-    public InboundResponseDTO getShipmentById(Long id) {
-        InboundReceipt receipt = receiptRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Receipt not found"));
-        return mapToResponse(receipt);
     }
 
     private InboundResponseDTO mapToResponse(InboundReceipt receipt) {
