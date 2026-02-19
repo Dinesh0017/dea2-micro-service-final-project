@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<!-- ============================================================ -->
-	<!-- PARENT - Spring Boot 4.0.2 (Latest Stable - Verified)      -->
-	<!-- ============================================================ -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
@@ -16,82 +11,81 @@
 		<relativePath/>
 	</parent>
 
-	<!-- ============================================================ -->
-	<!-- PROJECT INFORMATION                                          -->
-	<!-- ============================================================ -->
 	<groupId>com.wms</groupId>
-	<artifactId>customer-management-service</artifactId>
+	<artifactId>customer_management_service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<n>customer-management-service</n>
-	<description>Customer Management Service for Warehouse Management System</description>
+	<name>customer_management_service</name>
+	<description>customer management service</description>
 
-	<!-- ============================================================ -->
-	<!-- JAVA VERSION - Java 21 LTS                                  -->
-	<!-- ============================================================ -->
 	<properties>
 		<java.version>21</java.version>
 	</properties>
 
-	<!-- ============================================================ -->
-	<!-- DEPENDENCIES (All Latest Stable Versions - Verified)        -->
-	<!-- ============================================================ -->
 	<dependencies>
-
-		<!-- ======================================================== -->
-		<!-- 1. SPRING BOOT WEB                                       -->
-		<!-- Purpose : Build REST APIs + Embedded Tomcat             -->
-		<!-- Includes: Spring MVC, Jackson, SLF4J + Logback          -->
-		<!-- ======================================================== -->
+		<!-- Web / MVC -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<!-- ======================================================== -->
-		<!-- 2. SPRING DATA JPA + HIBERNATE                           -->
-		<!-- Purpose : ORM for PostgreSQL database operations         -->
-		<!-- ======================================================== -->
+		<!-- JPA / Hibernate -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
-		<!-- ======================================================== -->
-		<!-- 3. POSTGRESQL DRIVER                                     -->
-		<!-- Purpose : Connect to PostgreSQL database                 -->
-		<!-- Scope   : runtime only                                   -->
-		<!-- ======================================================== -->
+		<!-- Validation -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
+		<!-- Actuator -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!-- PostgreSQL driver -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- ======================================================== -->
-		<!-- 4. VALIDATION (Bean Validation)                          -->
-		<!-- Purpose : Input validation (@NotNull, @Email, etc.)      -->
-		<!-- ======================================================== -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-validation</artifactId>
-		</dependency>
-
-		<!-- ======================================================== -->
-		<!-- 5. SWAGGER / OPENAPI 3 (SpringDoc)                       -->
-		<!-- Purpose : Auto-generate interactive API documentation     -->
-		<!-- Version : 3.0.1 (for Spring Boot 4.x)                    -->
-		<!-- Access  : http://localhost:8081/swagger-ui.html          -->
-		<!-- ======================================================== -->
+		<!-- OpenAPI/Swagger UI -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>3.0.1</version>
+			<version>2.3.0</version>
 		</dependency>
 
-		<!-- ======================================================== -->
-		<!-- 6. SPRING BOOT DEVTOOLS                                  -->
-		<!-- Purpose : Auto-restart on code changes (dev mode only)   -->
-		<!-- ======================================================== -->
+		<!-- Choose ONE migration tool -->
+		<!-- Flyway -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<!-- Optional: DB-specific plugin for Flyway 10+ -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<!-- OR Liquibase (uncomment and remove Flyway block above)
+        <dependency>
+          <groupId>org.liquibase</groupId>
+          <artifactId>liquibase-core</artifactId>
+        </dependency>
+        -->
+
+		<!-- Lombok (optional) -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- Devtools (optional, dev only) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
@@ -99,30 +93,64 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- ======================================================== -->
-		<!-- 7. SPRING BOOT TEST                                      -->
-		<!-- Purpose : Complete testing framework                     -->
-		<!-- Includes: JUnit 5, Mockito, Spring Boot Test, MockMvc    -->
-		<!-- Scope   : test only                                      -->
-		<!-- ======================================================== -->
+		<!-- Config metadata (optional for IDE autocompletion) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- Testing -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
+		<!-- Optional: Mockito Jupiter helpers
+        <dependency>
+          <groupId>org.mockito</groupId>
+          <artifactId>mockito-junit-jupiter</artifactId>
+          <scope>test</scope>
+        </dependency>
+        -->
+		<!-- Optional: Testcontainers for Postgres integration tests
+        <dependency>
+          <groupId>org.testcontainers</groupId>
+          <artifactId>junit-jupiter</artifactId>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.testcontainers</groupId>
+          <artifactId>postgresql</artifactId>
+          <scope>test</scope>
+        </dependency>
+        -->
 	</dependencies>
 
-	<!-- ============================================================ -->
-	<!-- BUILD CONFIGURATION                                          -->
-	<!-- ============================================================ -->
 	<build>
 		<plugins>
+			<!-- You can omit versions; managed by Spring Boot parent -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</path>
+						<path>
+							<groupId>org.springframework.boot</groupId>
+							<artifactId>spring-boot-configuration-processor</artifactId>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
-
 </project>
