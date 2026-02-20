@@ -1,4 +1,4 @@
-package com.wms.customer.management.service;
+package com.wms.customer_management_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,4 +1,4 @@
-package com.wms.customer.management.service;
+package com.wms.customer_management_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
