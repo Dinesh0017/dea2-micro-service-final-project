@@ -3,6 +3,9 @@ package com.wms.workforce_equipment_service;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * Main application class for the Workforce & Equipment Service.
+ */
 @SpringBootApplication
 public class WorkforceEquipmentServiceApplication {
 
