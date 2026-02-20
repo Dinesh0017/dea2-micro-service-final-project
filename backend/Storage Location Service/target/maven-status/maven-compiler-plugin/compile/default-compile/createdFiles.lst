@@ -1,0 +1,14 @@
+com/wms/Storage/Location/Service/service/StorageLocationService.class
+com/wms/Storage/Location/Service/repository/StorageLocationRepository.class
+com/wms/Storage/Location/Service/exception/NotFoundException.class
+com/wms/Storage/Location/Service/controller/StorageLocationController.class
+com/wms/Storage/Location/Service/service/impl/StorageLocationServiceImpl.class
+com/wms/Storage/Location/Service/exception/ApiError$ApiErrorBuilder.class
+com/wms/Storage/Location/Service/entity/LocationAvailabilityStatus.class
+com/wms/Storage/Location/Service/exception/ApiError.class
+com/wms/Storage/Location/Service/dto/request/StorageLocationRequest.class
+com/wms/Storage/Location/Service/dto/response/StorageLocationResponse.class
+com/wms/Storage/Location/Service/exception/GlobalExceptionHandler.class
+com/wms/Storage/Location/Service/StorageLocationServiceApplication.class
+com/wms/Storage/Location/Service/entity/StorageLocation.class
+com/wms/Storage/Location/Service/exception/CapacityExceededException.class

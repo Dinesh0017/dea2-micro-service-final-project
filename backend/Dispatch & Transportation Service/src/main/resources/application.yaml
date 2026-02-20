@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: dispatch-transportation-service
+
+server:
+  port: 8086
