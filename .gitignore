@@ -9,3 +9,6 @@
 
 # Maven
 target/
+
+# Environment Variables
+.env
