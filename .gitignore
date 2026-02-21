@@ -12,3 +12,6 @@ target/
 
 # Environment Variables
 .env
+.idea/IntelliLang.xml
+.idea/workspace.xml
+.idea/workspace.xml

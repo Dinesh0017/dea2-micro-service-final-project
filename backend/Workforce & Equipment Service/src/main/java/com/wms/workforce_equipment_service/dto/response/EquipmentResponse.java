@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 public class EquipmentResponse {
 
     private Long id;
-    private Long userId;
-    private String type;
     private String name;
+    private String status;
+    private String description;
+    private Long equipmentTypeId;
+    private String equipmentTypeName;
 }

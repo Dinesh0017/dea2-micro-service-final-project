@@ -11,12 +11,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EquipmentRequest {
 
-    @NotNull(message = "User ID is required")
-    private Long userId;
-
-    @NotBlank(message = "Type is required")
-    private String type;
-
     @NotBlank(message = "Name is required")
     private String name;
+
+    @NotBlank(message = "Status is required")
+    private String status;
+
+    private String description;
+
+    @NotNull(message = "Equipment Type ID is required")
+    private Long equipmentTypeId;
 }
