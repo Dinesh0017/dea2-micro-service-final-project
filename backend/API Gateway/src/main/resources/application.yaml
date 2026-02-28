@@ -1,16 +1,15 @@
 server:
-  port: 8000
+  port: 8222
 
 spring:
   application:
     name: API-GATEWAY
   cloud:
     gateway:
-      routes:
-        - id: workforce-route
-          uri: lb://WORKFORCE-EQUIPMENT-SERVICE
-          predicates:
-            - Path=/api/**
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
 
 eureka:
   client:
