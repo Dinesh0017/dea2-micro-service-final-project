@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, ip-172-31-40-78]
+    runs-on: [self-hosted, aws-vm]
 
     steps:
       - name: Checkout Code
