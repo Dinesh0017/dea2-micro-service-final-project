@@ -1,3 +1,1 @@
-# dea2-micro-service-final-project
-
-# deploy
+# dea2-micro-service-final-projects
