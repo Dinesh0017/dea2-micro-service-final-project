@@ -10,6 +10,11 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+      routes:
+        - id: workforce-service
+          uri: lb://WORKFORCE-EQUIPMENT-SERVICE
+          predicates:
+            - Path=/api/maintenance-logs/**,/api/equipment-assignments/**,/api/equipment-types/**,/api/equipments/**,/api/workers/**
 
 eureka:
   client:
