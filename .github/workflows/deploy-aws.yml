@@ -1,4 +1,4 @@
-name: Deploy API Gateway and Eureka Server to AWS EC2
+name: Deploy API Gateway and Eureka Server to AZURE
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, aws-vm]
+    runs-on: [self-hosted, gateway]
 
     steps:
       - name: Checkout Code
