@@ -1,15 +1,24 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import BadgeIcon from "@mui/icons-material/Badge";
 import BusinessIcon from "@mui/icons-material/Business";
+import CategoryIcon from "@mui/icons-material/Category";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DnsIcon from "@mui/icons-material/Dns";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import MoveToInboxIcon from "@mui/icons-material/MoveToInbox";
 import PeopleIcon from "@mui/icons-material/People";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
+
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
 import CircleIcon from "@mui/icons-material/Circle";
 import {
   Avatar,
@@ -31,48 +40,70 @@ const services = [
   {
     label: "Customers",
     eurekaName: "CUSTOMER-MANAGEMENT-SERVICE",
+    href: "/customer_service",
     icon: <PeopleIcon />,
     gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   },
   {
     label: "Dispatch",
     eurekaName: "DISPATCH-TRANSPORTATION-SERVICE",
+    href: "/dispatch_service",
     icon: <LocalShippingIcon />,
     gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
   },
   {
     label: "Inbound",
     eurekaName: "INBOUND-RECEIVING-SERVICE",
+    href: "/inbound_service",
     icon: <MoveToInboxIcon />,
     gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
   },
   {
     label: "Inventory",
     eurekaName: "INVENTORY-MANAGEMENT-SERVICE",
+    href: "/inventory_service",
     icon: <InventoryIcon />,
     gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
   },
   {
     label: "Orders",
     eurekaName: "ORDER-SERVICE",
+    href: "/order_service",
     icon: <ShoppingCartIcon />,
     gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
   },
   {
     label: "Picking",
-    eurekaName: "PICKING_PACKING_SERVICE",
+    eurekaName: "PICKING-PACKING-SERVICE",
+    href: "/picking_service",
     icon: <PlaylistAddCheckIcon />,
     gradient: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
   },
   {
+    label: "Product Catalog",
+    eurekaName: "PRODUCT-CATALOG-SERVICE",
+    href: "/product_service",
+    icon: <CategoryIcon />,
+    gradient: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
+  },
+  {
+    label: "Storage Location",
+    eurekaName: "STORAGE-LOCATION-SERVICE",
+    href: "/storage_service",
+    icon: <WarehouseIcon />,
+    gradient: "linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)",
+  },
+  {
     label: "Suppliers",
     eurekaName: "SUPPLIER-MANAGEMENT-SERVICE",
+    href: "/supplier_service",
     icon: <BusinessIcon />,
     gradient: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
   },
   {
     label: "Workforce",
     eurekaName: "WORKFORCE-EQUIPMENT-SERVICE",
+    href: "/workforce_service",
     icon: <BadgeIcon />,
     gradient: "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",
   },
@@ -158,19 +189,28 @@ export default function DashboardPage() {
             label: "Total Services",
             value: String(services.length),
             color: "#6366f1",
+            icon: <DnsIcon sx={{ color: "#6366f1" }} />,
           },
           {
             label: "Active",
             value: String(activeCount),
             color: "#22c55e",
+            icon: <CheckCircleOutlineIcon sx={{ color: "#22c55e" }} />,
           },
           {
             label: "Down",
             value: String(downCount),
             color: "#ef4444",
+            icon: <ErrorOutlineIcon sx={{ color: "#ef4444" }} />,
+          },
+          {
+            label: "Uptime",
+            value: "99.9%",
+            color: "#f59e0b",
+            icon: <AccessTimeIcon sx={{ color: "#f59e0b" }} />,
           },
         ].map((stat) => (
-          <Grid size={{ xs: 12, sm: 4 }} key={stat.label}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={stat.label}>
             <Paper
               elevation={0}
               sx={{
@@ -204,7 +244,7 @@ export default function DashboardPage() {
                   height: 48,
                 }}
               >
-                <TrendingUpIcon sx={{ color: stat.color }} />
+                {stat.icon}
               </Avatar>
             </Paper>
           </Grid>
@@ -261,65 +301,67 @@ export default function DashboardPage() {
               size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
               key={service.label}
             >
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 3,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  cursor: "pointer",
-                  transition: "all 0.25s ease",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow:
-                      "0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04)",
-                    borderColor: "transparent",
-                  },
-                }}
-              >
-                <Avatar
+              <Link href={service.href} style={{ textDecoration: "none" }}>
+                <Paper
+                  elevation={0}
                   sx={{
-                    background: service.gradient,
-                    width: 48,
-                    height: 48,
+                    p: 3,
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    cursor: "pointer",
+                    transition: "all 0.25s ease",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow:
+                        "0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04)",
+                      borderColor: "transparent",
+                    },
                   }}
                 >
-                  {service.icon}
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="subtitle1"
+                  <Avatar
                     sx={{
-                      fontWeight: 600,
-                      color: "#1e293b",
-                      lineHeight: 1.3,
+                      background: service.gradient,
+                      width: 48,
+                      height: 48,
                     }}
                   >
-                    {service.label}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "#94a3b8" }}>
-                    Manage
-                  </Typography>
-                </Box>
-                {/* Status indicator */}
-                <Tooltip title={statusLabel} arrow>
-                  {status === "LOADING" ? (
-                    <CircularProgress size={14} thickness={5} />
-                  ) : (
-                    <CircleIcon
+                    {service.icon}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="subtitle1"
                       sx={{
-                        fontSize: 14,
-                        color: statusColor,
-                        filter: status === "UP" ? `drop-shadow(0 0 4px ${statusColor})` : "none",
+                        fontWeight: 600,
+                        color: "#1e293b",
+                        lineHeight: 1.3,
                       }}
-                    />
-                  )}
-                </Tooltip>
-              </Paper>
+                    >
+                      {service.label}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                      Manage
+                    </Typography>
+                  </Box>
+                  {/* Status indicator */}
+                  <Tooltip title={statusLabel} arrow>
+                    {status === "LOADING" ? (
+                      <CircularProgress size={14} thickness={5} />
+                    ) : (
+                      <CircleIcon
+                        sx={{
+                          fontSize: 14,
+                          color: statusColor,
+                          filter: status === "UP" ? `drop-shadow(0 0 4px ${statusColor})` : "none",
+                        }}
+                      />
+                    )}
+                  </Tooltip>
+                </Paper>
+              </Link>
             </Grid>
           );
         })}
