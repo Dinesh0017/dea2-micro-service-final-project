@@ -3,6 +3,7 @@ package com.wms.inventory_management_service.service;
 import com.wms.inventory_management_service.exception.ResourceNotFoundException;
 import com.wms.inventory_management_service.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
@@ -18,11 +19,16 @@ public class ProductCatalogClient {
 
     private final RestClient.Builder restClientBuilder;
 
+    // internal auth token used by API Gateway and internal services when calling Product Catalog
+    @Value("${internal.auth.token:S3CR3T}")
+    private String internalAuthToken;
+
     public ProductCatalogProduct getProductById(UUID productId) {
         try {
             return restClientBuilder.build()
                     .get()
                     .uri(PRODUCT_CATALOG_BASE_URL + "/{id}", productId)
+                    .headers(h -> h.set("X-Internal-Auth", internalAuthToken))
                     .retrieve()
                     .body(ProductCatalogProduct.class);
         } catch (HttpClientErrorException.NotFound ex) {

@@ -37,6 +37,11 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 20
 
+# Internal token used when calling internal services (Product Catalog) through Eureka
+internal:
+  auth:
+    token: ${INTERNAL_AUTH_TOKEN:S3CR3T}
+
 springdoc:
   api-docs:
     path: /v3/api-docs
