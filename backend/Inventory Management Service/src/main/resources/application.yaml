@@ -21,12 +21,11 @@ server:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_URL:http://131.163.97.60:8761/eureka/}
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
     fetch-registry: true
     register-with-eureka: true
   instance:
-    prefer-ip-address: true
-    ip-address: ${INSTANCE_IP:35.88.199.189}
+    prefer-ip-address: ${EUREKA_PREFER_IP:false}
     instance-id: ${spring.application.name}:${random.value}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 20
