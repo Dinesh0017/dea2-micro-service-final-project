@@ -4,7 +4,7 @@ const nextConfig = {
   reactCompiler: true,
   async rewrites() {
     const gateway =
-      process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:8080";
+      process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://131.163.97.60:8222";
     return [
       {
         source: "/api/:path*",
@@ -13,5 +13,6 @@ const nextConfig = {
     ];
   },
 };
+
 
 export default nextConfig;
