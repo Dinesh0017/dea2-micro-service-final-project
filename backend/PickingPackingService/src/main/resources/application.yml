@@ -48,6 +48,7 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     disable-swagger-default-url: true
+    url: /api-docs
 
 eureka:
   client:
