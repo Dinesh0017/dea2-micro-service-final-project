@@ -1,6 +1,6 @@
 package com.wms.workforce_equipment_service.service;
 
-import com.wms.workforce_equipment_service.client.InventoryServiceClient;
+import com.wms.workforce_equipment_service.client.StorageLocationServiceClient;
 import com.wms.workforce_equipment_service.dto.request.WorkerStorageLocationRequest;
 import com.wms.workforce_equipment_service.dto.response.StorageLocationResponse;
 import com.wms.workforce_equipment_service.dto.response.WorkerStorageLocationResponse;
@@ -27,7 +27,7 @@ public class WorkerStorageLocationService implements IWorkerStorageLocationServi
 
     private final WorkerStorageLocationRepository workerStorageLocationRepository;
     private final WorkerRepository workerRepository;
-    private final InventoryServiceClient inventoryServiceClient;
+    private final StorageLocationServiceClient storageLocationServiceClient;
 
     @Override
     @Transactional
@@ -40,17 +40,17 @@ public class WorkerStorageLocationService implements IWorkerStorageLocationServi
 
         //validate Storage Location exists via Feign Client
         try {
-            StorageLocationResponse locationResponse = inventoryServiceClient.getStorageLocationById(request.getStorageLocationId());
+            StorageLocationResponse locationResponse = storageLocationServiceClient.getStorageLocationById(request.getStorageLocationId());
             if (locationResponse == null) {
                 // if storage location is not found in inventory service
                 throw new ResourceNotFoundException("Storage Location not found with id: " + request.getStorageLocationId());
             }
         } catch (FeignException.NotFound e) {
-            log.error("Storage Location {} not found in Inventory Service", request.getStorageLocationId());
+            log.error("Storage Location {} not found in Storage Location Service", request.getStorageLocationId());
             throw new ResourceNotFoundException("Storage Location not found with id: " + request.getStorageLocationId());
         } catch (FeignException e) {
-            log.error("Error communicating with Inventory Service", e);
-            throw new RuntimeException("Error communicating with Inventory Service: " + e.getMessage());
+            log.error("Error communicating with Storage Location Service", e);
+            throw new RuntimeException("Error communicating with Storage Location Service: " + e.getMessage());
         }
 
         //check for existing assignment
