@@ -1,3 +1,54 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: Storage-Location-Service
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:update}
+    show-sql: ${DB_SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+server:
+  port: ${SERVER_PORT:8083}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# -----------------------------------------------------------------------
+# Eureka Client Configuration
+# -----------------------------------------------------------------------
+eureka:
+  client:
+    service-url:
+      # Point to the Eureka Server. Override via env var EUREKA_URI in Azure.
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+    # Fetch the registry so this service can discover other services
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    # Use IP address instead of hostname – required for correct registration
+    # on cloud platforms (Azure App Service, AKS, Azure VMs) where hostname
+    # resolution across services is not guaranteed.
+    prefer-ip-address: true
+

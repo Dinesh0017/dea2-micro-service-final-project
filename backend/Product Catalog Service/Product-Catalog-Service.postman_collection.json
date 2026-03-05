@@ -1,0 +1,336 @@
+{
+	"info": {
+		"_postman_id": "b8f9e6a0-8a7e-4b2e-a50f-2178b688c2f1",
+		"name": "Product Catalog Service (Fully Automated)",
+		"description": "A fully automated Postman collection that extracts IDs and runs operations sequentially. Best run as a Collection run.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Create Product",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let randomSku = 'SKU-' + Math.floor(Math.random() * 1000000);",
+							"pm.collectionVariables.set('random_sku', randomSku);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"let jsonData = pm.response.json();",
+							"pm.test(\"Extract product_id\", function () {",
+							"    pm.expect(jsonData.id).to.exist;",
+							"    pm.collectionVariables.set(\"product_id\", jsonData.id);",
+							"    console.log(\"Saved product_id: \" + jsonData.id);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Automated Product\",\n    \"description\": \"A product created by automated Postman runner\",\n    \"skuCode\": \"{{random_sku}}\",\n    \"price\": 199.99,\n    \"category\": \"Automation\",\n    \"active\": true\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/products",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products"
+					]
+				}
+			}
+		},
+		{
+			"name": "2. Get Product By ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"let jsonData = pm.response.json();",
+							"pm.test(\"ID matches\", function () {",
+							"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get(\"product_id\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/products/{{product_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products",
+						"{{product_id}}"
+					]
+				}
+			}
+		},
+		{
+			"name": "3. Update Product",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"let jsonData = pm.response.json();",
+							"pm.test(\"Name is updated\", function () {",
+							"    pm.expect(jsonData.name).to.eql(\"Automated Product (Updated)\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Automated Product (Updated)\",\n    \"description\": \"This description was updated by Postman\",\n    \"skuCode\": \"{{random_sku}}\",\n    \"price\": 299.99,\n    \"category\": \"Automation\",\n    \"active\": true\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/products/{{product_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products",
+						"{{product_id}}"
+					]
+				}
+			}
+		},
+		{
+			"name": "4. Get All Products",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"let jsonData = pm.response.json();",
+							"pm.test(\"Returns an array\", function () {",
+							"    pm.expect(jsonData).to.be.an(\"array\");",
+							"    pm.expect(jsonData.length).to.be.above(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/products",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products"
+					]
+				}
+			}
+		},
+		{
+			"name": "5. Deactivate Product",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"let jsonData = pm.response.json();",
+							"pm.test(\"Product is inactive\", function () {",
+							"    pm.expect(jsonData.active).to.be.false;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/products/{{product_id}}/deactivate",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products",
+						"{{product_id}}",
+						"deactivate"
+					]
+				}
+			}
+		},
+		{
+			"name": "6. Activate Product",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"let jsonData = pm.response.json();",
+							"pm.test(\"Product is active\", function () {",
+							"    pm.expect(jsonData.active).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/products/{{product_id}}/activate",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products",
+						"{{product_id}}",
+						"activate"
+					]
+				}
+			}
+		},
+		{
+			"name": "7. Delete Product",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/products/{{product_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products",
+						"{{product_id}}"
+					]
+				}
+			}
+		},
+		{
+			"name": "8. Verify Deletion (Get By ID)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 404 Not Found\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/products/{{product_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"products",
+						"{{product_id}}"
+					]
+				}
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "product_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "random_sku",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

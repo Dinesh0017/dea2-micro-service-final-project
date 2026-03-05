@@ -3,11 +3,15 @@ package com.wms.inbound_receiving_service.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "inbound_receipt_items")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class InboundReceiptItem {
 
     @Id
@@ -22,7 +26,6 @@ public class InboundReceiptItem {
     @JoinColumn(name = "receipt_id", nullable = false)
     private InboundReceipt receipt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    // Refactored: Store only the ID from the external Product Service
+    private Long productId;
 }
