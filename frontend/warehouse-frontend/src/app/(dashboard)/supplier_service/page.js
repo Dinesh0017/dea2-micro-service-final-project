@@ -69,13 +69,27 @@ export default function SupplierServicePage() {
     setSupplierLoading(true);
     try {
       const { data } = await getAllSuppliers();
-      const rows = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
+      const rows = Array.isArray(data) ? data : Array.isArray(data?.suppliers) ? data.suppliers : Array.isArray(data?.content) ? data.content : [];
       setSuppliers(rows);
     } catch (err) {
       console.error("Failed to fetch suppliers:", err);
       showToast("error", "Failed to load suppliers");
     } finally {
       setSupplierLoading(false);
+    }
+  }, []);
+
+  const fetchPurchaseOrders = useCallback(async () => {
+    setPOLoading(true);
+    try {
+      const { data } = await getAllPurchaseOrders();
+      const rows = Array.isArray(data) ? data : Array.isArray(data?.purchaseOrders) ? data.purchaseOrders : Array.isArray(data?.content) ? data.content : [];
+      setPurchaseOrders(rows);
+    } catch (err) {
+      console.error("Failed to fetch purchase orders:", err);
+      showToast("error", "Failed to load purchase orders");
+    } finally {
+      setPOLoading(false);
     }
   }, []);
 
