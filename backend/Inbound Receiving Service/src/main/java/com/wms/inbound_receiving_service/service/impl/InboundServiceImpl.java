@@ -2,10 +2,20 @@ package com.wms.inbound_receiving_service.service.impl;
 
 import com.wms.inbound_receiving_service.client.ProductClient;
 import com.wms.inbound_receiving_service.client.SupplierClient;
-import com.wms.inbound_receiving_service.dto.*;
+import com.wms.inbound_receiving_service.dto.InboundReceiptDTO;
+import com.wms.inbound_receiving_service.dto.InboundReceiptItemDTO;
+import com.wms.inbound_receiving_service.dto.InboundRequestDTO;
+import com.wms.inbound_receiving_service.dto.InboundResponseDTO;
+import com.wms.inbound_receiving_service.dto.SupplierListResponseDTO;
 import com.wms.inbound_receiving_service.exception.ResourceNotFoundException;
-import com.wms.inbound_receiving_service.model.*;
-import com.wms.inbound_receiving_service.repository.*;
+import com.wms.inbound_receiving_service.model.InboundReceipt;
+import com.wms.inbound_receiving_service.model.InboundReceiptItem;
+import com.wms.inbound_receiving_service.model.InboundShipment;
+import com.wms.inbound_receiving_service.model.Product;
+import com.wms.inbound_receiving_service.model.Supplier;
+import com.wms.inbound_receiving_service.repository.InboundReceiptItemRepository;
+import com.wms.inbound_receiving_service.repository.InboundReceiptRepository;
+import com.wms.inbound_receiving_service.repository.InboundRepository;
 import com.wms.inbound_receiving_service.service.InboundService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,49 +37,48 @@ public class InboundServiceImpl implements InboundService {
     private final SupplierClient supplierClient;
     private final ProductClient productClient;
 
-    // -------------------- RECEIVE SHIPMENT --------------------
     @Override
     @Transactional
     public InboundResponseDTO receiveShipment(InboundRequestDTO request) {
 
-        // 1) Call Supplier Service safely
         Supplier supplier = fetchSupplierByName(request.getSupplierName());
+        Product product = fetchProductByName(request.getProductName());
 
-        // 2) Call Product Service safely (prefer SKU, fallback to name)
-        Product product = fetchProduct(request.getSku(), request.getProductName());
+        if (request.getSku() != null && product.getSkuCode() != null
+                && !request.getSku().trim().equalsIgnoreCase(product.getSkuCode().trim())) {
+            throw new ResourceNotFoundException(
+                    "SKU mismatch. Selected product SKU is " + product.getSkuCode()
+                            + " but you sent " + request.getSku()
+            );
+        }
 
-        // 3) Save shipment record (your own DB)
         InboundShipment shipment = InboundShipment.builder()
                 .supplierName(request.getSupplierName())
                 .productName(request.getProductName())
                 .quantity(request.getQuantity())
                 .status("RECEIVED")
-                // .sku(request.getSku()) // uncomment ONLY if InboundShipment has sku field
                 .build();
 
         shipment = shipmentRepository.save(shipment);
 
-        // 4) Create receipt + receipt item
         InboundReceipt receipt = new InboundReceipt();
-        receipt.setSupplierId(supplier.getSupplierId());
+        receipt.setSupplierId(supplier.getId());
         receipt.setShipmentId(shipment.getId());
         receipt.setReceiptDate(LocalDate.now());
         receipt.setStatus("COMPLETED");
         receipt.setGrnNumber("GRN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
         InboundReceiptItem item = new InboundReceiptItem();
-        item.setProductId(product.getProductId());
+        item.setProductId(product.getId());
         item.setQuantityReceived(request.getQuantity());
         item.setQualityStatus("GOOD");
-
         receipt.addItem(item);
 
         InboundReceipt savedReceipt = receiptRepository.save(receipt);
 
-        return mapToResponse(savedReceipt, supplier.getSupplierName(), product.getProductName());
+        return mapToResponse(savedReceipt, supplier.getName(), product.getName());
     }
 
-    // -------------------- GET ALL SHIPMENTS --------------------
     @Override
     @Transactional(readOnly = true)
     public List<InboundResponseDTO> getAllShipments() {
@@ -84,7 +93,6 @@ public class InboundServiceImpl implements InboundService {
                 .collect(Collectors.toList());
     }
 
-    // -------------------- GET ALL RECEIPTS --------------------
     @Override
     @Transactional(readOnly = true)
     public List<InboundReceiptDTO> getAllReceipts() {
@@ -102,7 +110,6 @@ public class InboundServiceImpl implements InboundService {
                 .collect(Collectors.toList());
     }
 
-    // -------------------- GET ALL RECEIPT ITEMS --------------------
     @Override
     @Transactional(readOnly = true)
     public List<InboundReceiptItemDTO> getAllReceiptItems() {
@@ -113,18 +120,16 @@ public class InboundServiceImpl implements InboundService {
                             .id(i.getReceiptItemId())
                             .receiptId(i.getReceipt().getReceiptId())
                             .productName(productName)
-                            .quantityReceived(i.getQuantityReceived())
+                            .quantityReceived(i.getQuantityReceived() == null ? 0 : i.getQuantityReceived())
                             .condition(i.getQualityStatus())
                             .build();
                 })
                 .collect(Collectors.toList());
     }
 
-    // -------------------- GET SHIPMENT/RECEIPT BY ID --------------------
     @Override
     @Transactional(readOnly = true)
     public InboundResponseDTO getShipmentById(Long id) {
-        // NOTE: You are using receiptRepository here; "id" is treated as receiptId
         InboundReceipt receipt = receiptRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Receipt not found with id: " + id));
 
@@ -138,7 +143,6 @@ public class InboundServiceImpl implements InboundService {
         return mapToResponse(receipt, supplierName, productName);
     }
 
-    // -------------------- UPDATE STATUS --------------------
     @Override
     @Transactional
     public InboundResponseDTO updateShipmentStatus(Long id, String status) {
@@ -158,7 +162,6 @@ public class InboundServiceImpl implements InboundService {
         return mapToResponse(saved, supplierName, productName);
     }
 
-    // -------------------- DELETE --------------------
     @Override
     @Transactional
     public void deleteShipment(Long id) {
@@ -168,68 +171,74 @@ public class InboundServiceImpl implements InboundService {
         receiptRepository.deleteById(id);
     }
 
-    // -------------------- GET ALL INBOUND DATA --------------------
     @Override
     @Transactional(readOnly = true)
     public List<InboundResponseDTO> getAllInboundData() {
         return getAllShipments();
     }
 
-    // -------------------- HELPERS --------------------
     private Supplier fetchSupplierByName(String supplierName) {
         try {
-            Supplier s = supplierClient.getSupplierByName(supplierName);
-            if (s == null) {
-                throw new ResourceNotFoundException("Supplier not found: " + supplierName);
+            SupplierListResponseDTO response = supplierClient.getAllSuppliers();
+
+            if (response == null || response.getSuppliers() == null || response.getSuppliers().isEmpty()) {
+                throw new ResourceNotFoundException("No suppliers returned from supplier service");
             }
-            return s;
+
+            return response.getSuppliers().stream()
+                    .filter(s -> s.getName() != null && s.getName().trim().equalsIgnoreCase(supplierName.trim()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("Supplier not found: " + supplierName));
+
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
         } catch (Exception ex) {
-            // clear error instead of generic 503
             throw new ResourceNotFoundException("Supplier service error while finding supplier: " + supplierName);
         }
     }
 
-    private Product fetchProduct(String sku, String productName) {
-        // Prefer SKU if your Product service supports it
+    private Product fetchProductByName(String productName) {
         try {
-            // Uncomment if you have this method in ProductClient:
-            // Product p = productClient.getProductBySku(sku);
-            // if (p != null) return p;
-        } catch (Exception ignored) {
-            // ignore and fallback to name
-        }
+            List<Product> products = productClient.getAllProducts();
 
-        try {
-            Product p = productClient.getProductByName(productName);
-            if (p == null) {
-                throw new ResourceNotFoundException("Product not found: " + productName);
+            if (products == null || products.isEmpty()) {
+                throw new ResourceNotFoundException("No products returned from product service");
             }
-            return p;
+
+            return products.stream()
+                    .filter(p -> p.getName() != null && p.getName().trim().equalsIgnoreCase(productName.trim()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productName));
+
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ResourceNotFoundException("Product service error while finding product: " + productName);
         }
     }
 
-    private String safeSupplierName(Long supplierId) {
+    private String safeSupplierName(String supplierId) {
         try {
             Supplier s = supplierClient.getSupplierById(supplierId);
-            return (s != null && s.getSupplierName() != null) ? s.getSupplierName() : "N/A";
+            return (s != null && s.getName() != null) ? s.getName() : "N/A";
         } catch (Exception e) {
             return "N/A";
         }
     }
 
-    private String safeProductName(Long productId) {
+    private String safeProductName(String productId) {
         try {
             Product p = productClient.getProductById(productId);
-            return (p != null && p.getProductName() != null) ? p.getProductName() : "N/A";
+            return (p != null && p.getName() != null) ? p.getName() : "N/A";
         } catch (Exception e) {
             return "N/A";
         }
     }
 
     private InboundResponseDTO mapToResponse(InboundReceipt receipt, String supplierName, String productName) {
-        int qty = (receipt.getItems() != null && !receipt.getItems().isEmpty())
+        int qty = (receipt.getItems() != null
+                && !receipt.getItems().isEmpty()
+                && receipt.getItems().get(0).getQuantityReceived() != null)
                 ? receipt.getItems().get(0).getQuantityReceived()
                 : 0;
 
