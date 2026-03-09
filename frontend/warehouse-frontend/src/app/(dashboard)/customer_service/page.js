@@ -239,7 +239,8 @@ export default function CustomerServicePage() {
       fetchCustomers();
     } catch (err) {
       console.error("Deactivate failed:", err);
-      showToast("error", "Failed to deactivate customer.");
+      const msg = err.response?.data?.message || err.message || "Failed to deactivate customer.";
+      showToast("error", msg);
     }
   };
 

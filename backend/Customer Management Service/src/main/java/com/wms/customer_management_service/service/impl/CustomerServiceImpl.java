@@ -85,7 +85,7 @@ public class CustomerServiceImpl implements CustomerService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<CustomerResponse> getAllCustomers() {
-		return customerRepository.findAllByStatus(CustomerStatus.ACTIVE).stream()
+		return customerRepository.findAll().stream()
 				.map(customerMapper::toResponse)
 				.collect(Collectors.toList());
 	}
